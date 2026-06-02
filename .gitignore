@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.DS_Store
+npm-debug.log*
+__pycache__/
+*.pyc
+src/python_scripts/tmp_*.pdf
+tmp/
+*.pdf
+.idea/
+.vscode/
+.gemini/
