@@ -32,17 +32,16 @@ export const IDS = {
   updateTaskNotYet: "update_task_not_yet"
 } as const;
 
-export function panelContent(employee: Employee | null, openSession: AttendanceSession | null, dbLink?: string | null) {
-  const status = employee
-    ? employee.status === "APPROVED"
-      ? openSession
-        ? `Working since ${openSession.checkinAt.toLocaleString()}`
-        : "Ready to check in"
-      : `Profile: ${employee.status}`
-    : "No employee profile found";
+export function panelContent(dbLink?: string | null) {
+  const embed = new EmbedBuilder()
+    .setTitle('🏢 HR Team: Attendance & Shift Dashboard')
+    .setDescription('Click the buttons below to check in, check out, or manage your schedule. No commands needed!\n' + (dbLink ? `\n🔗 **Database:** [View Google Sheet](${dbLink})` : ''))
+    .setColor('#9b59b6')
+    .setFooter({ text: 'NSL Bot System • Designed by Khoi Nguyen (Tom)' });
 
   return {
-    content: [`**IT Attendance Bot**`, `Trang thai: ${status}`, dbLink ? `Database: ${dbLink}` : ""].filter(Boolean).join("\n"),
+    content: "",
+    embeds: [embed],
     components: [
       row(
         button(IDS.checkin, "Check in", ButtonStyle.Primary),

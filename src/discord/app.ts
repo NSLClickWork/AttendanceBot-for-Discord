@@ -143,8 +143,8 @@ async function handleInteraction(interaction: Interaction, services: Services, c
 }
 
 async function handleCommand(interaction: ChatInputCommandInteraction, services: Services, config: AppConfig) {
-  if (interaction.commandName === "panel" || interaction.commandName === "home") {
-    await interaction.reply({ ...(await buildPanel(interaction.user.id, services, config)), ephemeral: true } as any);
+  if (interaction.commandName === "setup_attendance_dashboard") {
+    await interaction.reply({ ...(await buildPanel(interaction.user.id, services, config)) } as any);
     return;
   }
   if (interaction.commandName === "payslip") {
@@ -433,21 +433,11 @@ async function handleModal(interaction: any, services: Services, config: AppConf
 }
 
 async function buildPanel(userId: string, services: Services, config: AppConfig) {
-  const employee = await services.employees.getByDiscordId(userId);
-  let openSession = null;
-  if (employee?.status === "APPROVED") {
-    const sessions = await services.attendance.mySessions(
-      userId,
-      new Date(Date.now() - 24 * 60 * 60 * 1000),
-      new Date(Date.now() + 24 * 60 * 60 * 1000)
-    );
-    openSession = sessions.find((session) => session.status === "OPEN") ?? null;
-  }
   const dbLink =
     (await services.employees.isManagerOrBoss(userId, bossIds(config))) && config.dbProvider === "sheets" && config.google.sheetsId
       ? `https://docs.google.com/spreadsheets/d/${config.google.sheetsId}`
       : null;
-  return panelContent(employee, openSession, dbLink);
+  return panelContent(dbLink);
 }
 
 async function syncMyCalendar(userId: string, services: Services) {

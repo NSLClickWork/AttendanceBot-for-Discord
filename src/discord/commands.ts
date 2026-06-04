@@ -1,8 +1,7 @@
 import { REST, Routes, SlashCommandBuilder } from "discord.js";
 
 export const discordCommands = [
-  new SlashCommandBuilder().setName("panel").setDescription("Open IT attendance bot panel"),
-  new SlashCommandBuilder().setName("home").setDescription("Open IT attendance bot panel"),
+  new SlashCommandBuilder().setName("setup_attendance_dashboard").setDescription("Open IT attendance bot panel"),
   new SlashCommandBuilder()
     .setName("payslip")
     .setDescription("Create a payslip PDF")
