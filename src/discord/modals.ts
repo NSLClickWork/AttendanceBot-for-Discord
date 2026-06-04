@@ -10,6 +10,12 @@ export function employeeAddModal() {
   ]);
 }
 
+export function checkinTasksModal() {
+  return modal("checkin_submit", "Check-in Tasks", [
+    input("tasks", "Tasks for this shift (one per line)", TextInputStyle.Paragraph, "", false)
+  ]);
+}
+
 export function otReportModal() {
   return modal("ot_report_submit", "Report OT", [
     input("start", "Start time, e.g. 2026-05-29 19:00"),
@@ -60,4 +66,10 @@ function input(
   const builder = new TextInputBuilder().setCustomId(customId).setLabel(label).setStyle(style).setRequired(required);
   if (value) builder.setValue(value);
   return builder;
+}
+
+export function checkoutNoteModal() {
+  return modal("checkout_note_submit", "Checkout Summary", [
+    input("note", "Note (optional)", TextInputStyle.Paragraph, "", false)
+  ]);
 }

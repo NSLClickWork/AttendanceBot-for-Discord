@@ -4,6 +4,7 @@ export type AttendanceStatus = "OPEN" | "CLOSED" | "MISSING_CHECKOUT";
 export type OtApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type OtRequestStatus = "PENDING_MANAGER" | "PENDING_BOSS" | "APPROVED" | "REJECTED";
 export type ScheduleDraftStatus = "DRAFT" | "APPROVED" | "CHANGES_REQUESTED" | "PUBLISHED";
+export type TaskStatus = "NOT_YET" | "IN_PROGRESS" | "DONE";
 
 export interface Employee {
   id: string;
@@ -44,6 +45,15 @@ export interface OtRequest {
   status: OtRequestStatus;
   managerApprovedBy: string | null;
   bossApprovedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ShiftTask {
+  id: string;
+  sessionId: string;
+  description: string;
+  status: TaskStatus;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -20,7 +20,7 @@ export class AttendanceService {
 
   async checkIn(
     discordUserId: string,
-    context?: { channelId?: string | null; topic?: string | null; sourceMessageTs?: string | null }
+    context?: { channelId?: string | null; topic?: string | null; sourceMessageTs?: string | null; tasks?: string[] }
   ): Promise<AttendanceSession> {
     const employee = await this.employees.getApprovedByDiscordId(discordUserId);
     const open = await this.attendance.findOpenSession(employee.id);
@@ -29,6 +29,9 @@ export class AttendanceService {
     }
 
     const session = await this.attendance.createSession(employee.id, this.clock.now(), context);
+    if (context?.tasks && context.tasks.length > 0) {
+      await this.attendance.createTasks(session.id, context.tasks);
+    }
     await this.reminders.scheduleCheckoutReminder({
       discordUserId,
       sessionId: session.id,
@@ -91,5 +94,22 @@ export class AttendanceService {
   async mySessions(discordUserId: string, from: Date, to: Date): Promise<AttendanceSession[]> {
     const employee = await this.employees.getApprovedByDiscordId(discordUserId);
     return this.attendance.listSessions(employee.id, from, to);
+  }
+
+  async getOpenSessionTasks(discordUserId: string) {
+    const employee = await this.employees.getApprovedByDiscordId(discordUserId);
+    const open = await this.attendance.findOpenSession(employee.id);
+    if (!open) {
+      throw new AppError("You don't have any open shift.", "NO_OPEN_SESSION");
+    }
+    return this.attendance.getTasksForSession(open.id);
+  }
+
+  async getTasksForSessionId(sessionId: string) {
+    return this.attendance.getTasksForSession(sessionId);
+  }
+
+  async updateTaskStatuses(taskIds: string[], status: import("../domain").TaskStatus) {
+    return this.attendance.updateTaskStatuses(taskIds, status);
   }
 }

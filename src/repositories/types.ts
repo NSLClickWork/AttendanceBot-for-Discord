@@ -8,7 +8,9 @@ import type {
   ScheduleDraft,
   ScheduleEventDraft,
   UsageSummaryRow,
-  WeeklyAvailability
+  WeeklyAvailability,
+  ShiftTask,
+  TaskStatus
 } from "../domain";
 
 export interface EmployeeCreateInput {
@@ -41,6 +43,9 @@ export interface AttendanceRepository {
   closeSession(sessionId: string, checkoutAt: Date, durationMinutes: number): Promise<AttendanceSession>;
   listSessions(employeeId: string, from: Date, to: Date): Promise<AttendanceSession[]>;
   summarize(from: Date, to: Date, employeeIds?: string[]): Promise<AttendanceSummaryRow[]>;
+  createTasks(sessionId: string, descriptions: string[]): Promise<void>;
+  getTasksForSession(sessionId: string): Promise<ShiftTask[]>;
+  updateTaskStatuses(taskIds: string[], status: TaskStatus): Promise<void>;
 }
 
 export interface OtCreateInput {

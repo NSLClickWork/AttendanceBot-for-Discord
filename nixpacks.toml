@@ -1,0 +1,20 @@
+[providers]
+node = true
+python = true
+
+[phases.setup]
+aptPkgs = ["libzbar0"]
+nixPkgs = ["nodejs_20", "python311"]
+
+[phases.install]
+cmds = [
+  "npm ci",
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[phases.start]
+cmd = "npm start"

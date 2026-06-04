@@ -15,7 +15,8 @@ const envSchema = z.object({
   GOOGLE_SCHEDULE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SHEETS_ID: z.string().optional(),
   GOOGLE_CLIENT_EMAIL: z.string().optional(),
-  GOOGLE_PRIVATE_KEY: z.string().optional()
+  GOOGLE_PRIVATE_KEY: z.string().optional(),
+  GAS_CALENDAR_WEBHOOK: z.string().optional()
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
@@ -40,7 +41,8 @@ export function loadConfig() {
       scheduleCalendarId: parsed.GOOGLE_SCHEDULE_CALENDAR_ID,
       sheetsId: parsed.GOOGLE_SHEETS_ID,
       clientEmail: parsed.GOOGLE_CLIENT_EMAIL,
-      privateKey: parsed.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n")
+      privateKey: parsed.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      gasCalendarWebhook: parsed.GAS_CALENDAR_WEBHOOK
     }
   };
 }

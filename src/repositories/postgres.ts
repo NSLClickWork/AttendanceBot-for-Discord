@@ -18,7 +18,9 @@ import type {
   ScheduleDraft,
   ScheduleEventDraft,
   UsageSummaryRow,
-  WeeklyAvailability
+  WeeklyAvailability,
+  ShiftTask,
+  TaskStatus
 } from "../domain";
 import type { DbPool } from "../db/pool";
 
@@ -55,6 +57,17 @@ function sessionFromRow(row: any): AttendanceSession {
     channelId: row.channel_id,
     topic: row.topic,
     sourceMessageTs: row.source_message_ts,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function taskFromRow(row: any): ShiftTask {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    description: row.description,
+    status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -243,6 +256,31 @@ export class PostgresRepository
       pendingOtMinutes: row.pending_ot_minutes,
       missingCheckoutCount: row.missing_checkout_count
     }));
+  }
+
+  async createTasks(sessionId: string, descriptions: string[]): Promise<void> {
+    if (descriptions.length === 0) return;
+    const values = descriptions.map((desc, i) => `($1, $${i + 2})`).join(', ');
+    await this.pool.query(
+      `INSERT INTO shift_tasks (session_id, description) VALUES ${values}`,
+      [sessionId, ...descriptions]
+    );
+  }
+
+  async getTasksForSession(sessionId: string): Promise<ShiftTask[]> {
+    const result = await this.pool.query(
+      "SELECT * FROM shift_tasks WHERE session_id = $1 ORDER BY created_at",
+      [sessionId]
+    );
+    return result.rows.map(taskFromRow);
+  }
+
+  async updateTaskStatuses(taskIds: string[], status: TaskStatus): Promise<void> {
+    if (taskIds.length === 0) return;
+    await this.pool.query(
+      `UPDATE shift_tasks SET status = $1, updated_at = now() WHERE id = ANY($2::uuid[])`,
+      [status, taskIds]
+    );
   }
 
   async createOtRequest(input: OtCreateInput): Promise<OtRequest> {

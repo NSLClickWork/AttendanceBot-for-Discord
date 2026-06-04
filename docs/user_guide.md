@@ -83,10 +83,10 @@ This feature allows employees to register their available/unavailable times for 
 ---
 
 ## 🗓️ SECTION 5: GOOGLE CALENDAR SYNC
-This feature lets you synchronize your completed working sessions from the **last 7 days** to the company's shared Google Calendar.
+This feature lets you synchronize your **submitted upcoming weekly schedules** to the company's shared Google Calendar so that your manager can easily see who will be working and at what time next week.
 
 *   **How to use**: Open `/panel` $\rightarrow$ Click the **`Sync Calendar`** button.
-*   The Bot will scan, compute, and sync your sessions in just 2 seconds!
+*   The Bot will instantly create calendar events for all your available slots in the upcoming week.
 
 ---
 
@@ -98,6 +98,7 @@ At the end of the month, you can generate your own professional PDF payslip and 
 2. In any channel where the Bot is active, type:
    `/payslip`
 3. A Discord **`qr`** attachment slot will appear $\rightarrow$ drag-and-drop or select your banking QR Code image to upload it.
+   *(Note: You can upload a full screenshot of your banking app. The bot will automatically detect and crop the QR code for you!)*
 4. Press **Enter** to submit the command. A modal form will pop up:
    *   **profile**: Enter your profile details separated by a pipe `|` character: `Full Name | Position | Company Name` (e.g., `Nguyen Van A|Developer|NSL Click & Work UG`).
    *   **period**: Enter the period and base salary: `Year|Month|Base Salary (EUR)` (e.g., `2026|5|1500`).

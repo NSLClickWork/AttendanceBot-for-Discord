@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import {
   AttachmentBuilder,
+  EmbedBuilder,
   Client,
   Events,
   GatewayIntentBits,
@@ -27,9 +28,17 @@ import {
   otManagerApprovalContent,
   panelContent,
   scheduleDeleteComponents,
-  weeklyScheduleReminderComponents
+  weeklyScheduleReminderComponents,
+  checkoutTasksPanel
 } from "./components";
-import { employeeAddModal, otReportModal, payslipSubmitModal, scheduleSubmitModal } from "./modals";
+import {
+  checkinTasksModal,
+  employeeAddModal,
+  otReportModal,
+  scheduleSubmitModal,
+  payslipSubmitModal,
+  checkoutNoteModal
+} from "./modals";
 
 const userQrCache = new Map<string, string>();
 
@@ -175,17 +184,20 @@ async function handleButton(interaction: any, services: Services, config: AppCon
     await interaction.showModal(payslipSubmitModal());
     return;
   }
+  if (customId === IDS.checkin) {
+    await interaction.showModal(checkinTasksModal());
+    return;
+  }
+  if (customId === IDS.confirmCheckout) {
+    await interaction.showModal(checkoutNoteModal());
+    return;
+  }
 
   await interaction.deferReply({ ephemeral: true });
 
-  if (customId === IDS.checkin) {
-    const session = await services.attendance.checkIn(actor);
-    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.`);
-    return;
-  }
   if (customId === IDS.checkout) {
-    const session = await services.attendance.checkOut(actor);
-    await interaction.editReply(`Checked out. Total time: ${session.durationMinutes} minutes.`);
+    const tasks = await services.attendance.getOpenSessionTasks(actor);
+    await interaction.editReply(checkoutTasksPanel(tasks) as any);
     return;
   }
   if (customId === IDS.continueWorking) {
@@ -272,12 +284,84 @@ async function handleSelect(interaction: any, services: Services, config: AppCon
   if (interaction.customId === IDS.deleteScheduleSelect) {
     await services.schedules.deleteAvailability(interaction.values[0], actor);
     await interaction.editReply("Deleted schedule successfully.");
+    return;
+  }
+
+  if (
+    interaction.customId === IDS.updateTaskDone ||
+    interaction.customId === IDS.updateTaskProgress ||
+    interaction.customId === IDS.updateTaskNotYet
+  ) {
+    let status: import("../domain").TaskStatus = "NOT_YET";
+    if (interaction.customId === IDS.updateTaskDone) status = "DONE";
+    if (interaction.customId === IDS.updateTaskProgress) status = "IN_PROGRESS";
+
+    await services.attendance.updateTaskStatuses(interaction.values, status);
+    const tasks = await services.attendance.getOpenSessionTasks(actor);
+    await interaction.editReply(checkoutTasksPanel(tasks) as any);
+    return;
   }
 }
 
 async function handleModal(interaction: any, services: Services, config: AppConfig) {
   const actor = interaction.user.id as string;
   await interaction.deferReply({ ephemeral: true });
+
+  if (interaction.customId === "checkin_submit") {
+    const tasksRaw = field(interaction, "tasks");
+    const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
+    const session = await services.attendance.checkIn(actor, { tasks });
+    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.`);
+    return;
+  }
+
+  if (interaction.customId === "checkout_note_submit") {
+    const note = field(interaction, "note");
+    const session = await services.attendance.checkOut(actor);
+    const employee = await services.employees.getByDiscordId(actor);
+    const tasks = await services.attendance.getTasksForSessionId(session.id);
+    
+    const tz = config.companyTimezone;
+    const formatTime = (d: Date) => d.toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" });
+    const checkinStr = formatTime(session.checkinAt);
+    const checkoutStr = session.checkoutAt ? formatTime(session.checkoutAt) : "N/A";
+    const dateStr = session.checkinAt.toLocaleDateString("en-GB", { timeZone: tz });
+    
+    let taskLines: string[] = [];
+    if (tasks.length > 0) {
+      for (const t of tasks) {
+        let emoji = "🔴";
+        if (t.status === "DONE") emoji = "🟢";
+        if (t.status === "IN_PROGRESS") emoji = "🟡";
+        taskLines.push(`${emoji} **${t.description}**`);
+      }
+    } else {
+      taskLines.push("*No tasks recorded*");
+    }
+
+    const embed = new EmbedBuilder()
+      .setAuthor({ name: `${employee?.name || actor}'s Shift Report`, iconURL: interaction.user.displayAvatarURL() })
+      .setColor(0x00ff00)
+      .addFields(
+        { name: "Date", value: dateStr, inline: true },
+        { name: "Duration", value: `${checkinStr} - ${checkoutStr} (${session.durationMinutes} mins)`, inline: true },
+        { name: "Tasks", value: taskLines.join("\n") }
+      )
+      .setTimestamp();
+      
+    if (note) {
+      embed.addFields({ name: "Note", value: note, inline: false });
+    }
+
+    const targetChannelId = "1511987549009219654";
+    const channel = await interaction.client.channels.fetch(targetChannelId).catch(() => null);
+    if (channel && channel.isTextBased() && "send" in channel) {
+      await channel.send({ embeds: [embed] });
+    }
+
+    await interaction.editReply(`Checked out. Total time: ${session.durationMinutes} minutes.`);
+    return;
+  }
 
   if (interaction.customId === "employee_add_submit") {
     const managerId = field(interaction, "manager");
@@ -367,21 +451,27 @@ async function buildPanel(userId: string, services: Services, config: AppConfig)
 }
 
 async function syncMyCalendar(userId: string, services: Services) {
-  const to = new Date();
-  const from = new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const sessions = await services.attendance.mySessions(userId, from, to);
-  const closedSessions = sessions.filter((session) => session.status === "CLOSED" && session.checkoutAt);
-  if (closedSessions.length === 0) return "No closed sessions found in the last 7 days.";
+  const nextMonday = nextMondayIso();
+  const availabilities = await services.schedules.listMyAvailability(userId);
+  const nextWeek = availabilities.find(a => a.weekStart === nextMonday);
+  
+  if (!nextWeek || nextWeek.availableSlots.length === 0) {
+    return "You haven't submitted your schedule for next week yet.";
+  }
+
+  const employee = await services.employees.getByDiscordId(userId);
+  const name = employee ? employee.name : userId;
+
   const googleIds = await services.calendar.createEvents(
-    closedSessions.map((session) => ({
-      employeeId: session.employeeId,
-      title: "Work Session",
-      startAt: session.checkinAt.toISOString(),
-      endAt: session.checkoutAt!.toISOString(),
-      notes: session.topic || "Work session"
+    nextWeek.availableSlots.map((slot) => ({
+      employeeId: nextWeek.employeeId,
+      title: `Work: ${name}`,
+      startAt: `${slot.day}T${slot.start}:00+07:00`,
+      endAt: `${slot.day}T${slot.end}:00+07:00`,
+      notes: nextWeek.notes || "Submitted availability"
     }))
   );
-  return `Synced ${googleIds.length} sessions to Google Calendar.`;
+  return `Synced ${googleIds.length} slots for next week to Google Calendar.`;
 }
 
 async function createPayslipPdf(form: Record<string, string | undefined>): Promise<{ buffer: Buffer; filename: string }> {

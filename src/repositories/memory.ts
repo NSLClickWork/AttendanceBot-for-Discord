@@ -37,6 +37,7 @@ export class MemoryRepository
     metadata?: Record<string, unknown>;
     createdAt: Date;
   }> = [];
+  shiftTasks = new Map<string, import("../domain").ShiftTask>();
 
   async createPending(input: EmployeeCreateInput): Promise<Employee> {
     const existing = [...this.employees.values()].find((employee) => employee.discordUserId === input.discordUserId);
@@ -173,6 +174,36 @@ export class MemoryRepository
         missingCheckoutCount: sessions.filter((session) => session.status === "MISSING_CHECKOUT").length
       };
     });
+  }
+
+  async createTasks(sessionId: string, descriptions: string[]): Promise<void> {
+    for (const desc of descriptions) {
+      const task: import("../domain").ShiftTask = {
+        id: randomUUID(),
+        sessionId,
+        description: desc,
+        status: "NOT_YET",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.shiftTasks.set(task.id, task);
+    }
+  }
+
+  async getTasksForSession(sessionId: string): Promise<import("../domain").ShiftTask[]> {
+    return [...this.shiftTasks.values()]
+      .filter((t) => t.sessionId === sessionId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async updateTaskStatuses(taskIds: string[], status: import("../domain").TaskStatus): Promise<void> {
+    for (const id of taskIds) {
+      const task = this.shiftTasks.get(id);
+      if (task) {
+        task.status = status;
+        task.updatedAt = new Date();
+      }
+    }
   }
 
   async createOtRequest(input: OtCreateInput): Promise<OtRequest> {

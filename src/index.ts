@@ -34,7 +34,8 @@ async function main() {
     calendarId: config.google.calendarId,
     clientEmail: config.google.clientEmail,
     privateKey: config.google.privateKey,
-    timezone: config.companyTimezone
+    timezone: config.companyTimezone,
+    gasWebhookUrl: config.google.gasCalendarWebhook
   });
 
   const services = createServices({

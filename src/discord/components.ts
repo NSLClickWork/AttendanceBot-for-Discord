@@ -2,9 +2,10 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
+  EmbedBuilder
 } from "discord.js";
-import type { AttendanceSession, Employee, OtRequest, WeeklyAvailability } from "../domain";
+import type { AttendanceSession, Employee, OtRequest, WeeklyAvailability, ShiftTask } from "../domain";
 
 export const IDS = {
   panel: "panel",
@@ -24,7 +25,11 @@ export const IDS = {
   deleteSchedule: "schedule_delete_open",
   deleteScheduleSelect: "schedule_delete_select",
   syncCalendar: "sync_calendar",
-  payslip: "open_payslip_modal"
+  payslip: "open_payslip_modal",
+  confirmCheckout: "attendance_confirm_checkout",
+  updateTaskDone: "update_task_done",
+  updateTaskProgress: "update_task_progress",
+  updateTaskNotYet: "update_task_not_yet"
 } as const;
 
 export function panelContent(employee: Employee | null, openSession: AttendanceSession | null, dbLink?: string | null) {
@@ -50,7 +55,7 @@ export function panelContent(employee: Employee | null, openSession: AttendanceS
         button(IDS.submitSchedule, "Submit weekly schedule", ButtonStyle.Secondary),
         button(IDS.deleteSchedule, "Delete Schedule", ButtonStyle.Secondary),
         button(IDS.syncCalendar, "Sync Calendar", ButtonStyle.Secondary),
-        button(IDS.payslip, "Payslip", ButtonStyle.Secondary)
+        button(IDS.payslip, "Payslip (Dùng /payslip để up QR)", ButtonStyle.Secondary)
       )
     ]
   };
@@ -141,4 +146,57 @@ function row(...components: ButtonBuilder[]) {
 
 function button(customId: string, label: string, style: ButtonStyle) {
   return new ButtonBuilder().setCustomId(customId).setLabel(label).setStyle(style);
+}
+
+export function checkoutTasksPanel(tasks: ShiftTask[]) {
+  if (tasks.length === 0) {
+    return {
+      content: "No tasks were recorded for this shift. Do you want to check out?",
+      components: [row(button(IDS.confirmCheckout, "✅ Confirm Checkout", ButtonStyle.Success))]
+    };
+  }
+
+  const lines = tasks.map(t => {
+    let emoji = "🔴";
+    if (t.status === "DONE") emoji = "🟢";
+    if (t.status === "IN_PROGRESS") emoji = "🟡";
+    return `${emoji} ${t.description}`;
+  });
+
+  const embed = new EmbedBuilder()
+    .setTitle("Shift Tasks Status")
+    .setDescription(lines.join("\n"))
+    .setColor(0x2b2d31);
+
+  const doneMenu = new StringSelectMenuBuilder()
+    .setCustomId(IDS.updateTaskDone)
+    .setPlaceholder("Mark tasks as DONE 🟢")
+    .setMinValues(1)
+    .setMaxValues(Math.min(tasks.length, 25))
+    .addOptions(tasks.map(t => ({ label: t.description.slice(0, 100), value: t.id })));
+
+  const progressMenu = new StringSelectMenuBuilder()
+    .setCustomId(IDS.updateTaskProgress)
+    .setPlaceholder("Mark tasks as IN PROGRESS 🟡")
+    .setMinValues(1)
+    .setMaxValues(Math.min(tasks.length, 25))
+    .addOptions(tasks.map(t => ({ label: t.description.slice(0, 100), value: t.id })));
+
+  const notYetMenu = new StringSelectMenuBuilder()
+    .setCustomId(IDS.updateTaskNotYet)
+    .setPlaceholder("Mark tasks as NOT YET 🔴")
+    .setMinValues(1)
+    .setMaxValues(Math.min(tasks.length, 25))
+    .addOptions(tasks.map(t => ({ label: t.description.slice(0, 100), value: t.id })));
+
+  return {
+    content: "Please update your task statuses, then click **Confirm Checkout**:",
+    embeds: [embed],
+    components: [
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(doneMenu),
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(progressMenu),
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(notYetMenu),
+      row(button(IDS.confirmCheckout, "✅ Confirm Checkout", ButtonStyle.Success))
+    ]
+  };
 }

@@ -28,6 +28,29 @@ PAGE_W,PAGE_H=A4; MARGIN=14*mm; CONTENT_W=PAGE_W-2*MARGIN
 _styles=getSampleStyleSheet()
 def _S(n,**k): return ParagraphStyle(n,parent=_styles['Normal'],**k)
 
+def auto_crop_qr(img_data: bytes) -> bytes:
+    try:
+        from pyzbar.pyzbar import decode
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(img_data))
+        decoded = decode(img)
+        if decoded:
+            rect = decoded[0].rect
+            pad = 20
+            left = max(0, rect.left - pad)
+            top = max(0, rect.top - pad)
+            right = min(img.width, rect.left + rect.width + pad)
+            bottom = min(img.height, rect.top + rect.height + pad)
+            cropped = img.crop((left, top, right, bottom))
+            buf = io.BytesIO()
+            cropped.save(buf, format="PNG")
+            return buf.getvalue()
+    except Exception as e:
+        import sys
+        print(f"QR crop warning: {e}", file=sys.stderr)
+    return img_data
+
 
 # ---------------------------------------------------------------
 #  TIỆN ÍCH TÍNH LƯƠNG  (dùng được riêng, ví dụ từ dữ liệu chấm công)
@@ -237,7 +260,8 @@ def generate_payslip(data: dict) -> bytes:
 
     qr_img=None
     if data.get("qr_bytes"):
-        qr_img=RLImage(io.BytesIO(data["qr_bytes"]),width=34*mm,height=34*mm)
+        cropped_bytes = auto_crop_qr(data["qr_bytes"])
+        qr_img=RLImage(io.BytesIO(cropped_bytes),width=34*mm,height=34*mm)
     elif data.get("qr_path"):
         path_or_url = data["qr_path"]
         if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
@@ -250,13 +274,18 @@ def generate_payslip(data: dict) -> bytes:
                 )
                 with urllib.request.urlopen(req) as response:
                     img_data = response.read()
-                qr_img = RLImage(io.BytesIO(img_data), width=34*mm, height=34*mm)
+                cropped_bytes = auto_crop_qr(img_data)
+                qr_img = RLImage(io.BytesIO(cropped_bytes), width=34*mm, height=34*mm)
             except Exception as e:
                 import sys
                 print(f"Failed to load QR from URL {path_or_url}: {e}", file=sys.stderr)
                 qr_img = None
         else:
-            try: qr_img=RLImage(path_or_url,width=34*mm,height=34*mm)
+            try: 
+                with open(path_or_url, "rb") as f:
+                    img_data = f.read()
+                cropped_bytes = auto_crop_qr(img_data)
+                qr_img=RLImage(io.BytesIO(cropped_bytes),width=34*mm,height=34*mm)
             except Exception: qr_img=None
     right = qr_img if qr_img else Paragraph('',foot)
     pay_block=Table([[info_tbl,right]],colWidths=[CONTENT_W-44*mm,44*mm])

@@ -95,7 +95,8 @@ const TABLES = {
     "metadata",
     "created_at"
   ],
-  bot_usage_events: ["id", "actor_discord_user_id", "feature", "credit_cost", "metadata", "created_at"]
+  bot_usage_events: ["id", "actor_discord_user_id", "feature", "credit_cost", "metadata", "created_at"],
+  shift_tasks: ["id", "session_id", "description", "status", "created_at", "updated_at"]
 } as const;
 
 type TableName = keyof typeof TABLES;
@@ -282,6 +283,45 @@ export class GoogleSheetsRepository
         missingCheckoutCount: employeeSessions.filter((session) => session.status === "MISSING_CHECKOUT").length
       };
     });
+  }
+
+  async createTasks(sessionId: string, descriptions: string[]): Promise<void> {
+    await this.initialize();
+    const now = new Date().toISOString();
+    for (const desc of descriptions) {
+      const row = {
+        id: randomUUID(),
+        session_id: sessionId,
+        description: desc,
+        status: "NOT_YET",
+        created_at: now,
+        updated_at: now
+      };
+      await this.appendObject("shift_tasks", row);
+    }
+  }
+
+  async getTasksForSession(sessionId: string): Promise<import("../domain").ShiftTask[]> {
+    await this.initialize();
+    return (await this.readAll("shift_tasks"))
+      .filter((row) => row.data.session_id === sessionId)
+      .map((row) => taskFromData(row.data))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async updateTaskStatuses(taskIds: string[], status: import("../domain").TaskStatus): Promise<void> {
+    await this.initialize();
+    const now = new Date().toISOString();
+    for (const id of taskIds) {
+      const row = await this.findRowById("shift_tasks", id);
+      if (row) {
+        await this.updateById("shift_tasks", id, {
+          ...row.data,
+          status,
+          updated_at: now
+        });
+      }
+    }
   }
 
   async createOtRequest(input: OtCreateInput): Promise<OtRequest> {
@@ -679,6 +719,17 @@ function draftFromData(data: Record<string, string>): ScheduleDraft {
     status: (data.status || "DRAFT") as ScheduleDraft["status"],
     approvedBy: data.approved_by || null,
     googleCalendarEventIds: parseJson(data.google_calendar_event_ids, []),
+    createdAt: dateOrNow(data.created_at),
+    updatedAt: dateOrNow(data.updated_at)
+  };
+}
+
+function taskFromData(data: Record<string, string>): import("../domain").ShiftTask {
+  return {
+    id: data.id,
+    sessionId: data.session_id,
+    description: data.description,
+    status: (data.status || "NOT_YET") as import("../domain").TaskStatus,
     createdAt: dateOrNow(data.created_at),
     updatedAt: dateOrNow(data.updated_at)
   };

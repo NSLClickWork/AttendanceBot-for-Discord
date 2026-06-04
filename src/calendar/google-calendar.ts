@@ -12,10 +12,32 @@ export class GoogleCalendarGateway implements CalendarGateway {
       clientEmail?: string;
       privateKey?: string;
       timezone: string;
+      gasWebhookUrl?: string;
     }
   ) {}
 
   async createEvents(events: ScheduleEventDraft[], calendarId?: string): Promise<string[]> {
+    if (this.options.gasWebhookUrl) {
+      try {
+        const response = await fetch(this.options.gasWebhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            events,
+            calendarId: calendarId || this.options.calendarId
+          })
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error("GAS Webhook error: " + data.error);
+        }
+        return data.ids || [];
+      } catch (err) {
+        console.error("Failed to sync via GAS webhook:", err);
+        throw err;
+      }
+    }
+
     if (!this.options.clientEmail || !this.options.privateKey) {
       console.warn("Missing Google service account credentials. Skipping calendar events creation.");
       return events.map((_, i) => `mock-event-id-${Date.now()}-${i}`);
