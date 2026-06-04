@@ -37,7 +37,7 @@ export function panelContent(dbLink?: string | null) {
     .setTitle('🏢 HR Team: Attendance & Shift Dashboard')
     .setDescription('Click the buttons below to check in, check out, or manage your schedule. No commands needed!\n' + (dbLink ? `\n🔗 **Database:** [View Google Sheet](${dbLink})` : ''))
     .setColor('#9b59b6')
-    .setFooter({ text: 'NSL Bot System • Designed by Khoi Nguyen (Tom)' });
+    .setFooter({ text: 'NSL Bot System • Designed by Sharkie' });
 
   return {
     content: "",
