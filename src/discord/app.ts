@@ -353,7 +353,7 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       embed.addFields({ name: "Note", value: note, inline: false });
     }
 
-    const targetChannelId = "1511987549009219654";
+    const targetChannelId = config.discord.channelId || "1511991414148436048";
     const channel = await interaction.client.channels.fetch(targetChannelId).catch(() => null);
     if (channel && channel.isTextBased() && "send" in channel) {
       await channel.send({ embeds: [embed] });
