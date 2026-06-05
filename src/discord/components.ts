@@ -54,7 +54,7 @@ export function panelContent(dbLink?: string | null) {
         button(IDS.submitSchedule, "Submit weekly schedule", ButtonStyle.Secondary),
         button(IDS.deleteSchedule, "Delete Schedule", ButtonStyle.Secondary),
         button(IDS.syncCalendar, "Sync Calendar", ButtonStyle.Secondary),
-        button(IDS.payslip, "Payslip (Dùng /payslip để up QR)", ButtonStyle.Secondary)
+        button(IDS.payslip, "Payslip (Use /payslip for QR)", ButtonStyle.Secondary)
       )
     ]
   };

@@ -67,7 +67,7 @@ export function createDiscordApp(config: AppConfig, services: Services) {
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
     const text = message.content.toLowerCase();
-    if (text.includes("payslip") || text.includes("bang luong") || text.includes("bảng lương")) {
+    if (text.includes("payslip")) {
       await message.reply({
         content: "Create NSL payslip from the bot panel or use `/payslip`."
       });
@@ -314,8 +314,8 @@ async function handleModal(interaction: any, services: Services, config: AppConf
 
     const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
     const carriedOverTasks = previousNotYetTasks.map(t => {
-      const desc = t.description.replace(/^\[Ca trước\]\s*/, '');
-      return `[Ca trước] ${desc}`;
+      const desc = t.description.replace(/^\[(?:Ca trước|Prev)\]\s*/, '');
+      return `[Prev] ${desc}`;
     });
     const allTasks = [...carriedOverTasks, ...tasks];
 
@@ -327,9 +327,9 @@ async function handleModal(interaction: any, services: Services, config: AppConf
         const pendingTasks = await services.airtable.getPendingTasks(actor);
         if (pendingTasks.length > 0) {
           const taskLines = pendingTasks.map((t, i) => `${i + 1}. **${t.name}** (Deadline: ${t.deadline || 'None'})`);
-          airtableMsg = `\n\n📋 **Nhắc nhẹ! Các Task bạn đang nợ sếp:**\n${taskLines.join('\n')}`;
+          airtableMsg = `\n\n📋 **Reminder! Your pending tasks:**\n${taskLines.join('\n')}`;
         } else {
-          airtableMsg = `\n\n📋 **Nhắc nhẹ:** Bạn không có Task nào đang nợ sếp! Tuyệt vời!`;
+          airtableMsg = `\n\n📋 **Reminder:** You have no pending tasks! Great job!`;
         }
       } catch (err) {
         console.error("Error fetching Airtable tasks", err);
@@ -338,8 +338,8 @@ async function handleModal(interaction: any, services: Services, config: AppConf
 
     let notYetMsg = "";
     if (previousNotYetTasks.length > 0) {
-      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description.replace(/^\[Ca trước\]\s*/, '')}**`);
-      notYetMsg = `\n\n⚠️ **Đã chuyển tiếp ${previousNotYetTasks.length} task "NOT YET" từ ca trước sang ca này:**\n${lines.join("\n")}`;
+      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description.replace(/^\[(?:Ca trước|Prev)\]\s*/, '')}**`);
+      notYetMsg = `\n\n⚠️ **Carried over ${previousNotYetTasks.length} "NOT YET" tasks from previous shift:**\n${lines.join("\n")}`;
     }
 
     await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
