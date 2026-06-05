@@ -18,8 +18,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_EMAIL: z.string().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
   GAS_CALENDAR_WEBHOOK: z.string().optional(),
-  AIRTABLE_API_KEY: z.string().optional(),
-  AIRTABLE_BASE_ID: z.string().optional()
+  AIRTABLE_API_KEY: z.string().trim().optional(),
+  AIRTABLE_BASE_ID: z.string().trim().optional()
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
