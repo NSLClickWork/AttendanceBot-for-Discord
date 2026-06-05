@@ -80,6 +80,15 @@ export function createDiscordApp(config: AppConfig, services: Services) {
     }
 
     if (pendingPayslipForms.has(message.author.id)) {
+      if (!message.channel.isDMBased()) {
+        const warning = await message.reply("Please check your **Direct Messages (DMs)** and send the image there for privacy! This message will be deleted.");
+        setTimeout(() => {
+          warning.delete().catch(() => {});
+          message.delete().catch(() => {});
+        }, 5000);
+        return;
+      }
+
       const pending = pendingPayslipForms.get(message.author.id)!;
       const attachment = message.attachments.first();
       
@@ -515,7 +524,8 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       });
     } else {
       pendingPayslipForms.set(actor, { formFields, timestamp: Date.now() });
-      await interaction.editReply("Form received! Please drag and drop your **QR Code image** into this chat (or type `skip` if you don't have one). I'll wait for your image to generate the PDF.");
+      await interaction.editReply("Form received! Please check your **Direct Messages (DMs)** with me to continue.");
+      await sendDm(interaction.client, actor, "Please drag and drop your **QR Code image** here (or type `skip` if you don't have one). I'll wait for your image to generate the PDF.");
       
       setTimeout(() => {
         if (pendingPayslipForms.has(actor) && pendingPayslipForms.get(actor)?.timestamp === pendingPayslipForms.get(actor)?.timestamp) {
