@@ -119,11 +119,17 @@ export class MemoryRepository
   }
 
   async findOpenSession(employeeId: string): Promise<AttendanceSession | null> {
-    return (
-      [...this.sessions.values()]
-        .filter((session) => session.employeeId === employeeId && session.status === "OPEN")
-        .sort((a, b) => b.checkinAt.getTime() - a.checkinAt.getTime())[0] ?? null
-    );
+    const sessions = Array.from(this.sessions.values())
+      .filter((s) => s.employeeId === employeeId && s.status === "OPEN")
+      .sort((a, b) => b.checkinAt.getTime() - a.checkinAt.getTime());
+    return sessions[0] || null;
+  }
+
+  async getLastClosedSession(employeeId: string): Promise<AttendanceSession | null> {
+    const sessions = Array.from(this.sessions.values())
+      .filter((s) => s.employeeId === employeeId && s.status === "CLOSED")
+      .sort((a, b) => b.checkinAt.getTime() - a.checkinAt.getTime());
+    return sessions[0] || null;
   }
 
   async closeSession(sessionId: string, checkoutAt: Date, durationMinutes: number): Promise<AttendanceSession> {

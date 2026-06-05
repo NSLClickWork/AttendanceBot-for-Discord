@@ -40,6 +40,7 @@ export interface AttendanceRepository {
     context?: { channelId?: string | null; topic?: string | null; sourceMessageTs?: string | null }
   ): Promise<AttendanceSession>;
   findOpenSession(employeeId: string): Promise<AttendanceSession | null>;
+  getLastClosedSession(employeeId: string): Promise<AttendanceSession | null>;
   closeSession(sessionId: string, checkoutAt: Date, durationMinutes: number): Promise<AttendanceSession>;
   listSessions(employeeId: string, from: Date, to: Date): Promise<AttendanceSession[]>;
   summarize(from: Date, to: Date, employeeIds?: string[]): Promise<AttendanceSummaryRow[]>;

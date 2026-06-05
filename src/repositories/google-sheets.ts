@@ -225,6 +225,14 @@ export class GoogleSheetsRepository
     return rows[0] ? sessionFromData(rows[0].data) : null;
   }
 
+  async getLastClosedSession(employeeId: string): Promise<AttendanceSession | null> {
+    await this.initialize();
+    const rows = (await this.readAll("attendance_sessions"))
+      .filter((row) => row.data.employee_id === employeeId && row.data.status === "CLOSED")
+      .sort((a, b) => dateMs(b.data.checkin_at) - dateMs(a.data.checkin_at));
+    return rows[0] ? sessionFromData(rows[0].data) : null;
+  }
+
   async closeSession(sessionId: string, checkoutAt: Date, durationMinutes: number): Promise<AttendanceSession> {
     await this.initialize();
     const row = await this.findRowById("attendance_sessions", sessionId);

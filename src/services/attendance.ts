@@ -112,4 +112,13 @@ export class AttendanceService {
   async updateTaskStatuses(taskIds: string[], status: import("../domain").TaskStatus) {
     return this.attendance.updateTaskStatuses(taskIds, status);
   }
+
+  async getPreviousSessionNotYetTasks(discordUserId: string) {
+    const employee = await this.employees.getApprovedByDiscordId(discordUserId);
+    const lastSession = await this.attendance.getLastClosedSession(employee.id);
+    if (!lastSession) return [];
+
+    const tasks = await this.attendance.getTasksForSession(lastSession.id);
+    return tasks.filter(t => t.status === "NOT_YET");
+  }
 }

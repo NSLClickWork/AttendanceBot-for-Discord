@@ -328,7 +328,14 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       }
     }
 
-    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${airtableMsg}`);
+    const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
+    let notYetMsg = "";
+    if (previousNotYetTasks.length > 0) {
+      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description}**`);
+      notYetMsg = `\n\n⚠️ **Nhắc việc từ ca trước:** Bạn có ${previousNotYetTasks.length} task đánh dấu "NOT YET":\n${lines.join("\n")}`;
+    }
+
+    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
     return;
   }
 

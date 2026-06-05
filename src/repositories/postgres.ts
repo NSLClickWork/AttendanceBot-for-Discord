@@ -208,6 +208,17 @@ export class PostgresRepository
     return result.rows[0] ? sessionFromRow(result.rows[0]) : null;
   }
 
+  async getLastClosedSession(employeeId: string): Promise<AttendanceSession | null> {
+    const result = await this.pool.query(
+      `SELECT * FROM attendance_sessions
+       WHERE employee_id = $1 AND status = 'CLOSED'
+       ORDER BY checkin_at DESC
+       LIMIT 1`,
+      [employeeId]
+    );
+    return result.rows[0] ? sessionFromRow(result.rows[0]) : null;
+  }
+
   async closeSession(sessionId: string, checkoutAt: Date, durationMinutes: number): Promise<AttendanceSession> {
     const result = await this.pool.query(
       `UPDATE attendance_sessions
