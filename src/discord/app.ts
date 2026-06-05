@@ -311,7 +311,15 @@ async function handleModal(interaction: any, services: Services, config: AppConf
   if (interaction.customId === "checkin_submit") {
     const tasksRaw = field(interaction, "tasks");
     const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
-    const session = await services.attendance.checkIn(actor, { tasks });
+
+    const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
+    const carriedOverTasks = previousNotYetTasks.map(t => {
+      const desc = t.description.replace(/^\[Ca trước\]\s*/, '');
+      return `[Ca trước] ${desc}`;
+    });
+    const allTasks = [...carriedOverTasks, ...tasks];
+
+    const session = await services.attendance.checkIn(actor, { tasks: allTasks });
     
     let airtableMsg = "";
     if (services.airtable) {
@@ -328,11 +336,10 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       }
     }
 
-    const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
     let notYetMsg = "";
     if (previousNotYetTasks.length > 0) {
-      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description}**`);
-      notYetMsg = `\n\n⚠️ **Nhắc việc từ ca trước:** Bạn có ${previousNotYetTasks.length} task đánh dấu "NOT YET":\n${lines.join("\n")}`;
+      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description.replace(/^\[Ca trước\]\s*/, '')}**`);
+      notYetMsg = `\n\n⚠️ **Đã chuyển tiếp ${previousNotYetTasks.length} task "NOT YET" từ ca trước sang ca này:**\n${lines.join("\n")}`;
     }
 
     await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
