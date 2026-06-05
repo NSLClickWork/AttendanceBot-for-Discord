@@ -16,6 +16,7 @@
     "db:reset": "tsx src/db/clear.ts"
   },
   "dependencies": {
+    "airtable": "^0.12.2",
     "bullmq": "^5.34.1",
     "discord.js": "^14.26.4",
     "dotenv": "^16.4.7",

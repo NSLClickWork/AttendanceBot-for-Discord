@@ -16,7 +16,9 @@ const envSchema = z.object({
   GOOGLE_SHEETS_ID: z.string().optional(),
   GOOGLE_CLIENT_EMAIL: z.string().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
-  GAS_CALENDAR_WEBHOOK: z.string().optional()
+  GAS_CALENDAR_WEBHOOK: z.string().optional(),
+  AIRTABLE_API_KEY: z.string().optional(),
+  AIRTABLE_BASE_ID: z.string().optional()
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
@@ -43,6 +45,10 @@ export function loadConfig() {
       clientEmail: parsed.GOOGLE_CLIENT_EMAIL,
       privateKey: parsed.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       gasCalendarWebhook: parsed.GAS_CALENDAR_WEBHOOK
+    },
+    airtable: {
+      apiKey: parsed.AIRTABLE_API_KEY,
+      baseId: parsed.AIRTABLE_BASE_ID
     }
   };
 }

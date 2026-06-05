@@ -53,6 +53,7 @@ describe("IT attendance bot services", () => {
       reminders,
       planner: new RuleBasedSchedulePlanner(),
       calendar,
+      airtable: {} as any,
       bossUserIds: ["UBOSS"],
       timezone: "Asia/Ho_Chi_Minh",
       clock

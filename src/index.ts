@@ -9,6 +9,7 @@ import { PostgresRepository } from "./repositories/postgres";
 import { createServices } from "./services/container";
 import { systemClock } from "./services/clock";
 import { createDiscordApp } from "./discord/app";
+import { AirtableGateway } from "./services/airtable";
 
 const logger = pino({ name: "it-attendance-discord-bot" });
 
@@ -43,6 +44,7 @@ async function main() {
     reminders,
     planner,
     calendar,
+    airtable: new AirtableGateway(config.airtable.apiKey, config.airtable.baseId),
     bossUserIds: config.discord.bossUserIds,
     timezone: config.companyTimezone,
     clock: systemClock,

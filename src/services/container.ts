@@ -7,6 +7,7 @@ import type {
   UsageRepository
 } from "../repositories/types";
 import type { CalendarGateway } from "../calendar/google-calendar";
+import type { AirtableGateway } from "./airtable";
 import type { SchedulePlanner } from "../ai/schedule-planner";
 import type { ReminderScheduler } from "./reminders";
 import type { Clock } from "./clock";
@@ -27,6 +28,7 @@ export interface Services {
   usage: UsageService;
   chatAssistant: ChatAssistantService;
   calendar: CalendarGateway;
+  airtable: AirtableGateway;
 }
 
 export function createServices(input: {
@@ -39,6 +41,7 @@ export function createServices(input: {
   reminders: ReminderScheduler;
   planner: SchedulePlanner;
   calendar: CalendarGateway;
+  airtable: AirtableGateway;
   bossUserIds: string[];
   timezone: string;
   clock: Clock;
@@ -67,5 +70,5 @@ export function createServices(input: {
   const usage = new UsageService(input.repositories);
   const chatAssistant = new ChatAssistantService(attendance, usage);
 
-  return { employees, attendance, ot, schedules, reports, usage, chatAssistant, calendar: input.calendar };
+  return { employees, attendance, ot, schedules, reports, usage, chatAssistant, calendar: input.calendar, airtable: input.airtable };
 }

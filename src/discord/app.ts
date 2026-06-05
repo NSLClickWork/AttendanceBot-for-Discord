@@ -311,7 +311,23 @@ async function handleModal(interaction: any, services: Services, config: AppConf
     const tasksRaw = field(interaction, "tasks");
     const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
     const session = await services.attendance.checkIn(actor, { tasks });
-    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.`);
+    
+    let airtableMsg = "";
+    if (services.airtable) {
+      try {
+        const pendingTasks = await services.airtable.getPendingTasks(actor);
+        if (pendingTasks.length > 0) {
+          const taskLines = pendingTasks.map((t, i) => `${i + 1}. **${t.name}** (Deadline: ${t.deadline || 'None'})`);
+          airtableMsg = `\n\n📋 **Nhắc nhẹ! Các Task bạn đang nợ sếp:**\n${taskLines.join('\n')}`;
+        } else {
+          airtableMsg = `\n\n📋 **Nhắc nhẹ:** Bạn không có Task nào đang nợ sếp! Tuyệt vời!`;
+        }
+      } catch (err) {
+        console.error("Error fetching Airtable tasks", err);
+      }
+    }
+
+    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${airtableMsg}`);
     return;
   }
 
