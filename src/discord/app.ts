@@ -41,7 +41,12 @@ import {
   checkoutNoteModal
 } from "./modals";
 
+interface PendingPayslip {
+  formFields: Record<string, string | undefined>;
+  timestamp: number;
+}
 const userQrCache = new Map<string, string>();
+const pendingPayslipForms = new Map<string, PendingPayslip>();
 
 export function createDiscordApp(config: AppConfig, services: Services) {
   const token = requireEnv(config.discord.botToken, "DISCORD_BOT_TOKEN");
@@ -69,9 +74,38 @@ export function createDiscordApp(config: AppConfig, services: Services) {
     const text = message.content.toLowerCase();
     if (text.includes("payslip")) {
       await message.reply({
-        content: "Create NSL payslip from the bot panel or use `/payslip`."
+        content: "Create NSL payslip from the bot panel."
       });
       return;
+    }
+
+    if (pendingPayslipForms.has(message.author.id)) {
+      const pending = pendingPayslipForms.get(message.author.id)!;
+      const attachment = message.attachments.first();
+      
+      let processPayslip = false;
+      if (attachment && attachment.contentType?.startsWith("image/")) {
+        pending.formFields.qr_path = attachment.url;
+        processPayslip = true;
+      } else if (text === "skip") {
+        processPayslip = true;
+      }
+
+      if (processPayslip) {
+        pendingPayslipForms.delete(message.author.id);
+        const processingMsg = await message.reply("Processing your payslip...");
+        try {
+          const pdf = await createPayslipPdf(pending.formFields);
+          await processingMsg.edit({
+            content: `Payslip created: ${pdf.filename}`,
+            files: [new AttachmentBuilder(pdf.buffer, { name: pdf.filename })]
+          });
+        } catch (err) {
+          await processingMsg.edit("Failed to create payslip. Please try again.");
+          console.error(err);
+        }
+        return;
+      }
     }
     if (message.channel.isDMBased()) {
       const reply = await services.chatAssistant.handle({
@@ -470,17 +504,25 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       ...parsePipeField(field(interaction, "ot"), ["ot_day", "ot_hours", "ot_multiplier"]),
       ...parsePipeField(field(interaction, "bank"), ["ben_name", "bank", "account"])
     };
+
     if (onlineQrUrl) {
       formFields.qr_path = onlineQrUrl;
-    }
-    const pdf = await createPayslipPdf(formFields);
-    if (onlineQrUrl) {
+      const pdf = await createPayslipPdf(formFields);
       userQrCache.delete(actor);
+      await interaction.editReply({
+        content: `Payslip created: ${pdf.filename}`,
+        files: [new AttachmentBuilder(pdf.buffer, { name: pdf.filename })]
+      });
+    } else {
+      pendingPayslipForms.set(actor, { formFields, timestamp: Date.now() });
+      await interaction.editReply("Form received! Please drag and drop your **QR Code image** into this chat (or type `skip` if you don't have one). I'll wait for your image to generate the PDF.");
+      
+      setTimeout(() => {
+        if (pendingPayslipForms.has(actor) && pendingPayslipForms.get(actor)?.timestamp === pendingPayslipForms.get(actor)?.timestamp) {
+          pendingPayslipForms.delete(actor);
+        }
+      }, 5 * 60 * 1000); // Expire after 5 minutes
     }
-    await interaction.editReply({
-      content: `Payslip created: ${pdf.filename}`,
-      files: [new AttachmentBuilder(pdf.buffer, { name: pdf.filename })]
-    });
   }
 }
 
