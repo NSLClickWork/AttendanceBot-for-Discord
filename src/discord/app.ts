@@ -376,6 +376,7 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       await channel.send({ embeds: [embed] });
     }
 
+    console.log("DEBUG: config.google.shiftCalendarId =", config.google.shiftCalendarId);
     if (session.checkoutAt && employee && config.google.shiftCalendarId) {
       try {
         const cleanTaskLines = taskLines.map(line => line.replace(/\*\*/g, "").replace(/\*/g, ""));
