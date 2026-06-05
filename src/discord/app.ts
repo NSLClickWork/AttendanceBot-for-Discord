@@ -8,6 +8,7 @@ import {
   Client,
   Events,
   GatewayIntentBits,
+  MessageFlags,
   type ChatInputCommandInteraction,
   type Interaction,
   type MessageCreateOptions
@@ -193,7 +194,7 @@ async function handleButton(interaction: any, services: Services, config: AppCon
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (customId === IDS.checkout) {
     const tasks = await services.attendance.getOpenSessionTasks(actor);
@@ -269,7 +270,7 @@ async function handleButton(interaction: any, services: Services, config: AppCon
 
 async function handleSelect(interaction: any, services: Services, config: AppConfig) {
   const actor = interaction.user.id as string;
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (interaction.customId === IDS.deleteEmployeeSelect) {
     if (!(await services.employees.isManagerOrBoss(actor, bossIds(config)))) {
@@ -305,7 +306,7 @@ async function handleSelect(interaction: any, services: Services, config: AppCon
 
 async function handleModal(interaction: any, services: Services, config: AppConfig) {
   const actor = interaction.user.id as string;
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (interaction.customId === "checkin_submit") {
     const tasksRaw = field(interaction, "tasks");
@@ -556,7 +557,7 @@ async function replyError(interaction: Interaction, error: unknown) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(message).catch(() => {});
     } else {
-      await interaction.reply({ content: message, ephemeral: true } as any).catch(() => {});
+      await interaction.reply({ content: message, flags: MessageFlags.Ephemeral } as any).catch(() => {});
     }
   }
 }
