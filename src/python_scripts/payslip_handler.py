@@ -128,6 +128,20 @@ def compute_payslip_data(form: dict) -> dict:
 def _parse_weekday_list(raw, default):
     if raw is None or str(raw).strip() == "":
         return default
-    return [int(x) for x in str(raw).split(",") if x.strip()]
+    
+    res = []
+    for x in str(raw).split(","):
+        x = x.strip().upper()
+        if not x: continue
+        if x == 'CN' or x == '8':
+            res.append(6)
+        else:
+            try:
+                val = int(x) - 2
+                if 0 <= val <= 6:
+                    res.append(val)
+            except ValueError:
+                pass
+    return res
 
 
