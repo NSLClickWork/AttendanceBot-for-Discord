@@ -375,6 +375,26 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       await channel.send({ embeds: [embed] });
     }
 
+    if (session.checkoutAt && employee && config.google.shiftCalendarId) {
+      try {
+        const cleanTaskLines = taskLines.map(line => line.replace(/\*\*/g, "").replace(/\*/g, ""));
+        const notesContent = [
+          `Tasks:\n${cleanTaskLines.join("\n")}`,
+          note ? `\nNote:\n${note}` : ""
+        ].filter(Boolean).join("\n");
+
+        await services.calendar.createEvents([{
+          employeeId: employee.id,
+          title: `Shift: ${employee.name}`,
+          startAt: session.checkinAt.toISOString(),
+          endAt: session.checkoutAt.toISOString(),
+          notes: notesContent
+        }], config.google.shiftCalendarId);
+      } catch (err) {
+        console.error("Failed to sync shift to calendar:", err);
+      }
+    }
+
     await interaction.editReply(`Checked out. Total time: ${session.durationMinutes} minutes.`);
     return;
   }

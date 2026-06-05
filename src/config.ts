@@ -13,6 +13,7 @@ const envSchema = z.object({
   COMPANY_TIMEZONE: z.string().default("Asia/Ho_Chi_Minh"),
   GOOGLE_CALENDAR_ID: z.string().default("primary"),
   GOOGLE_SCHEDULE_CALENDAR_ID: z.string().optional(),
+  GOOGLE_SHIFT_CALENDAR_ID: z.string().optional(),
   GOOGLE_SHEETS_ID: z.string().optional(),
   GOOGLE_CLIENT_EMAIL: z.string().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
@@ -41,6 +42,7 @@ export function loadConfig() {
     google: {
       calendarId: parsed.GOOGLE_CALENDAR_ID,
       scheduleCalendarId: parsed.GOOGLE_SCHEDULE_CALENDAR_ID,
+      shiftCalendarId: parsed.GOOGLE_SHIFT_CALENDAR_ID,
       sheetsId: parsed.GOOGLE_SHEETS_ID,
       clientEmail: parsed.GOOGLE_CLIENT_EMAIL,
       privateKey: parsed.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
