@@ -44,7 +44,7 @@ export function payslipSubmitModal() {
     input("profile", "name|position|department", TextInputStyle.Paragraph, "Nguyen Van A|Developer|NSL Click & Work UG"),
     input("period", "year|month|salary", TextInputStyle.Short, "2026|5|1500"),
     input("work", "full_days|full_start|part_days|part_start", TextInputStyle.Short, "2,3,4,5,6|08:30|7|08:30"),
-    input("ot", "ot_day|ot_hours|ot_multiplier", TextInputStyle.Short, "|4|1.5", false),
+    input("ot", "ot_day|ot_hours|ot_multiplier", TextInputStyle.Short, "", false),
     input("bank", "beneficiary|bank|account", TextInputStyle.Paragraph, "Nguyen Van A||", false)
   ]);
 }

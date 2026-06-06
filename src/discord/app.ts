@@ -586,7 +586,10 @@ async function createPayslipPdf(form: Record<string, string | undefined>): Promi
         reject(new Error(`Python process exited with code ${code}: ${errStr}`));
       } else {
         const buffer = Buffer.concat(chunks);
-        const filename = `${(form.name || "payslip").replace(/\s+/g, "_")}.pdf`;
+        const namePart = (form.name || "payslip").replace(/\s+/g, "_");
+        const monthPart = form.month ? form.month.padStart(2, "0") : "";
+        const yearPart = form.year || "";
+        const filename = `Payslip_${namePart}_${monthPart}${yearPart}.pdf`;
         resolve({ buffer, filename });
       }
     });
