@@ -20,7 +20,7 @@ export class AttendanceService {
 
   async checkIn(
     discordUserId: string,
-    context?: { channelId?: string | null; topic?: string | null; sourceMessageTs?: string | null; tasks?: string[] }
+    context?: { channelId?: string | null; topic?: string | null; sourceMessageTs?: string | null; tasks?: string[]; checkinAt?: Date }
   ): Promise<AttendanceSession> {
     const employee = await this.employees.getApprovedByDiscordId(discordUserId);
     const open = await this.attendance.findOpenSession(employee.id);
@@ -28,7 +28,7 @@ export class AttendanceService {
       throw new AppError("You have an open shift. Please check out first.", "SESSION_ALREADY_OPEN");
     }
 
-    const session = await this.attendance.createSession(employee.id, this.clock.now(), context);
+    const session = await this.attendance.createSession(employee.id, context?.checkinAt || this.clock.now(), context);
     if (context?.tasks && context.tasks.length > 0) {
       await this.attendance.createTasks(session.id, context.tasks);
     }

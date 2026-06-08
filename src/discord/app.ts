@@ -38,7 +38,8 @@ import {
   otReportModal,
   scheduleSubmitModal,
   payslipSubmitModal,
-  checkoutNoteModal
+  checkoutNoteModal,
+  retroCheckinModal
 } from "./modals";
 
 interface PendingPayslip {
@@ -189,6 +190,10 @@ async function handleInteraction(interaction: Interaction, services: Services, c
 async function handleCommand(interaction: ChatInputCommandInteraction, services: Services, config: AppConfig) {
   if (interaction.commandName === "setup_attendance_dashboard") {
     await interaction.reply({ ...(await buildPanel(interaction.user.id, services, config)) } as any);
+    return;
+  }
+  if (interaction.commandName === "diemdanhbu") {
+    await interaction.showModal(retroCheckinModal());
     return;
   }
   if (interaction.commandName === "payslip") {
@@ -350,6 +355,60 @@ async function handleSelect(interaction: any, services: Services, config: AppCon
 async function handleModal(interaction: any, services: Services, config: AppConfig) {
   const actor = interaction.user.id as string;
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  if (interaction.customId === "retro_checkin_submit") {
+    const timeRaw = field(interaction, "time");
+    const tasksRaw = field(interaction, "tasks");
+    const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
+
+    let checkinAt: Date;
+    try {
+      if (timeRaw.includes("-")) {
+        checkinAt = parseDateTime(timeRaw);
+      } else {
+        const now = new Date();
+        const [hh, mm] = timeRaw.split(":");
+        if (!hh || !mm) throw new Error("Invalid time format");
+        const todayStr = now.toISOString().split("T")[0];
+        checkinAt = parseDateTime(`${todayStr} ${timeRaw}`);
+      }
+    } catch (err) {
+      throw new AppError("Invalid time format. Please use YYYY-MM-DD HH:mm or HH:mm.", "INVALID_INPUT");
+    }
+
+    const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
+    const carriedOverTasks = previousNotYetTasks.map(t => {
+      const desc = t.description.replace(/^\[(?:Ca trước|Prev)\]\s*/, '');
+      return `[Prev] ${desc}`;
+    });
+    const allTasks = [...carriedOverTasks, ...tasks];
+
+    const session = await services.attendance.checkIn(actor, { tasks: allTasks, checkinAt });
+    
+    let airtableMsg = "";
+    if (services.airtable) {
+      try {
+        const pendingTasks = await services.airtable.getPendingTasks(actor);
+        if (pendingTasks.length > 0) {
+          const taskLines = pendingTasks.map((t, i) => `${i + 1}. **${t.name}** (Deadline: ${t.deadline || 'None'})`);
+          airtableMsg = `\n\n📋 **Reminder! Your pending tasks:**\n${taskLines.join('\n')}`;
+        } else {
+          airtableMsg = `\n\n📋 **Reminder:** You have no pending tasks! Great job!`;
+        }
+      } catch (err) {
+        console.error("Error fetching Airtable tasks", err);
+      }
+    }
+
+    let notYetMsg = "";
+    if (previousNotYetTasks.length > 0) {
+      const lines = previousNotYetTasks.map((t, i) => `${i + 1}. **${t.description.replace(/^\[(?:Ca trước|Prev)\]\s*/, '')}**`);
+      notYetMsg = `\n\n⚠️ **Carried over ${previousNotYetTasks.length} "NOT YET" tasks from previous shift:**\n${lines.join("\n")}`;
+    }
+
+    await interaction.editReply(`Retroactively checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
+    return;
+  }
 
   if (interaction.customId === "checkin_submit") {
     const tasksRaw = field(interaction, "tasks");

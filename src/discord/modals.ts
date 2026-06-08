@@ -73,3 +73,10 @@ export function checkoutNoteModal() {
     input("note", "Note (optional)", TextInputStyle.Paragraph, "", false)
   ]);
 }
+
+export function retroCheckinModal() {
+  return modal("retro_checkin_submit", "Điểm danh bù (Retro check-in)", [
+    input("time", "Time (e.g. 08:30 or 2026-06-08 08:30)", TextInputStyle.Short, ""),
+    input("tasks", "Tasks for this shift (one per line)", TextInputStyle.Paragraph, "", false)
+  ]);
+}

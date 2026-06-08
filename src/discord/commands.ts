@@ -10,7 +10,10 @@ export const discordCommands = [
         .setName("qr")
         .setDescription("Upload your banking QR code image (optional)")
         .setRequired(false)
-    )
+    ),
+  new SlashCommandBuilder()
+    .setName("diemdanhbu")
+    .setDescription("Điểm danh bù (Retroactive check-in)")
 ].map((command) => command.toJSON());
 
 export async function registerDiscordCommands(input: { token: string; clientId: string; guildId?: string }) {
