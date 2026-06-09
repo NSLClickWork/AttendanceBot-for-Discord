@@ -405,7 +405,8 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       notYetMsg = `\n\n⚠️ **Carried over ${previousNotYetTasks.length} "NOT YET" tasks from previous shift:**\n${lines.join("\n")}`;
     }
 
-    await interaction.editReply(`Retroactively checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
+    const timeStr = session.checkinAt.toLocaleString("en-GB", { timeZone: config.companyTimezone });
+    await interaction.editReply(`Retroactively checked in at ${timeStr}.${notYetMsg}${airtableMsg}`);
     return;
   }
 
@@ -443,7 +444,8 @@ async function handleModal(interaction: any, services: Services, config: AppConf
       notYetMsg = `\n\n⚠️ **Carried over ${previousNotYetTasks.length} "NOT YET" tasks from previous shift:**\n${lines.join("\n")}`;
     }
 
-    await interaction.editReply(`Checked in at ${session.checkinAt.toLocaleString()}.${notYetMsg}${airtableMsg}`);
+    const timeStr = session.checkinAt.toLocaleString("en-GB", { timeZone: config.companyTimezone });
+    await interaction.editReply(`Checked in at ${timeStr}.${notYetMsg}${airtableMsg}`);
     return;
   }
 
