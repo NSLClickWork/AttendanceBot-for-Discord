@@ -18,7 +18,7 @@ import type { Services } from "../services/container";
 import { AppError } from "../services/errors";
 import type { ReminderDelivery } from "../jobs/reminder-queue";
 import type { CheckoutReminderKind } from "../services/reminders";
-import { nextMondayIso, parseDateTime, parseSlotLines } from "../utils/parsers";
+import { nextMondayIso, parseDateTime, parseDateTimeInTz, getTodayStrInTz, parseSlotLines } from "../utils/parsers";
 import { registerDiscordCommands } from "./commands";
 import {
   checkoutReminderComponents,
@@ -364,13 +364,12 @@ async function handleModal(interaction: any, services: Services, config: AppConf
     let checkinAt: Date;
     try {
       if (timeRaw.includes("-")) {
-        checkinAt = parseDateTime(timeRaw);
+        checkinAt = parseDateTimeInTz(timeRaw, config.companyTimezone);
       } else {
-        const now = new Date();
         const [hh, mm] = timeRaw.split(":");
         if (!hh || !mm) throw new Error("Invalid time format");
-        const todayStr = now.toISOString().split("T")[0];
-        checkinAt = parseDateTime(`${todayStr} ${timeRaw}`);
+        const todayStr = getTodayStrInTz(config.companyTimezone);
+        checkinAt = parseDateTimeInTz(`${todayStr} ${timeRaw}`, config.companyTimezone);
       }
     } catch (err) {
       throw new AppError("Invalid time format. Please use YYYY-MM-DD HH:mm or HH:mm.", "INVALID_INPUT");
