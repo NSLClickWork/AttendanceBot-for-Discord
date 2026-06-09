@@ -10,7 +10,7 @@ export function parseDateTime(input: string): Date {
 }
 
 export function getTzOffset(timeZone: string, date = new Date()): string {
-  const str = new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
     month: "2-digit",
@@ -19,11 +19,17 @@ export function getTzOffset(timeZone: string, date = new Date()): string {
     minute: "2-digit",
     second: "2-digit",
     hour12: false
-  }).format(date);
+  }).formatToParts(date);
 
-  const [datePart, timePart] = str.split(", ");
-  const [yyyy, mm, dd] = datePart.split("-");
-  const [hr, min, sec] = timePart.split(":");
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || "00";
+  const yyyy = getPart("year");
+  const mm = getPart("month");
+  const dd = getPart("day");
+  let hr = getPart("hour");
+  const min = getPart("minute");
+  const sec = getPart("second");
+
+  if (hr === "24") hr = "00";
 
   const localAsUtc = Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), Number(hr), Number(min), Number(sec));
   const diffMinutes = Math.round((localAsUtc - date.getTime()) / 60000);
@@ -45,12 +51,15 @@ export function parseDateTimeInTz(input: string, timeZone: string): Date {
 }
 
 export function getTodayStrInTz(timeZone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
-  }).format(new Date());
+  }).formatToParts(new Date());
+  
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || "00";
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
 }
 
 export function parseSlotLines(input: string): AvailabilitySlot[] {
