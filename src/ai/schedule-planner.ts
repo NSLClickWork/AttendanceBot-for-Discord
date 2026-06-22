@@ -24,13 +24,13 @@ export class RuleBasedSchedulePlanner implements SchedulePlanner {
 
       return availability.availableSlots.map((slot) => ({
         employeeId: employee.id,
-        title: `[${employee.team}] ${employee.name} - Ca làm`,
+        title: `[${employee.team}] ${employee.name} - Shift`,
         startAt: `${slot.day}T${slot.start}:00`,
         endAt: `${slot.day}T${slot.end}:00`,
         notes: [
           availability.notes,
           `Discord user: ${employee.discordUserId}`,
-          `Nguồn: Discord bot weekly availability`,
+          `Source: Discord bot weekly availability`,
           `Timezone: ${input.timezone}`
         ]
           .filter(Boolean)

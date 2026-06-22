@@ -9,7 +9,7 @@ export class AppError extends Error {
 
 export function assertFound<T>(value: T | null | undefined, code = "NOT_FOUND"): T {
   if (!value) {
-    throw new AppError("Không tìm thấy dữ liệu phù hợp.", code);
+    throw new AppError("Matching data not found.", code);
   }
   return value;
 }

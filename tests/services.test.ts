@@ -196,7 +196,7 @@ describe("IT attendance bot services", () => {
     const draft = await services.schedules.generateDraft("2026-06-01", "UMANAGER");
     expect(draft.aiOutput).toHaveLength(1);
     expect(calendar.created).toHaveLength(0);
-    expect(draft.aiOutput[0]).toMatchObject({ employeeId: employee.id, title: "[IT] Nguyen Van A - Ca làm" });
+    expect(draft.aiOutput[0]).toMatchObject({ employeeId: employee.id, title: "[IT] Nguyen Van A - Shift" });
 
     const published = await services.schedules.approveAndPublishDraft(draft.id, "UBOSS");
     expect(published.status).toBe("PUBLISHED");

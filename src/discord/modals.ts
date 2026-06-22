@@ -84,7 +84,7 @@ export function checkoutNoteModal() {
 }
 
 export function retroCheckinModal() {
-  return modal("retro_checkin_submit", "Điểm danh bù (Retro check-in)", [
+  return modal("retro_checkin_submit", "Retroactive Check-in", [
     input("time", "Time (e.g. 08:30 or 2026-06-08 08:30)", TextInputStyle.Short, ""),
     input(
       "tasks",

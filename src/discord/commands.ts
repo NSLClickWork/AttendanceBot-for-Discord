@@ -13,7 +13,7 @@ export const discordCommands = [
     ),
   new SlashCommandBuilder()
     .setName("diemdanhbu")
-    .setDescription("Điểm danh bù (Retroactive check-in)")
+    .setDescription("Retroactive check-in")
 ].map((command) => command.toJSON());
 
 export async function registerDiscordCommands(input: { token: string; clientId: string; guildId?: string }) {
