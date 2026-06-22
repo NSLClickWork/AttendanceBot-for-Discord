@@ -27,13 +27,13 @@ describe("task validator", () => {
   it("should return invalid if task is too short", () => {
     const result = validateTaskLines("làm bài 10h");
     expect(result.valid).toBe(false);
-    expect(result.errors[0].reasons[0]).toContain("quá ngắn");
+    expect(result.errors[0].reasons[0]).toContain("too short");
   });
 
   it("should return invalid if task is missing deadline", () => {
     const result = validateTaskLines("Design 2 thumbnails for Instagram");
     expect(result.valid).toBe(false);
-    expect(result.errors[0].reasons[0]).toContain("thiếu mốc thời gian");
+    expect(result.errors[0].reasons[0]).toContain("missing deadline");
   });
 
   it("should validate multiple lines and report specific lines", () => {

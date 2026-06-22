@@ -19,11 +19,11 @@ export function validateTaskLines(rawInput: string): TaskValidationResult {
     const lineErrors: string[] = [];
 
     if (line.length < 20) {
-      lineErrors.push("quá ngắn (cần ít nhất 20 ký tự để mô tả rõ ràng)");
+      lineErrors.push("too short (needs at least 20 characters to be clear)");
     }
 
     if (!deadlineRegex.test(line)) {
-      lineErrors.push("thiếu mốc thời gian hoàn thành (ví dụ: '17:00' hoặc 'by 18:30')");
+      lineErrors.push("missing deadline (e.g. '17:00' or 'by 18:30')");
     }
 
     if (lineErrors.length > 0) {
@@ -42,14 +42,14 @@ export function validateTaskLines(rawInput: string): TaskValidationResult {
 }
 
 export function formatValidationError(errors: TaskValidationError[]): string {
-  let message = "⚠️ **Báo cáo của bạn chưa đúng định dạng SMART!**\n\n";
+  let message = "⚠️ **Your task does not match the SMART format!**\n\n";
   
   errors.forEach((err) => {
-    message += `Dòng ${err.lineIndex}: "${err.line}"\n`;
-    message += `👉 Lỗi: ${err.reasons.join(", ")}\n\n`;
+    message += `Line ${err.lineIndex}: "${err.line}"\n`;
+    message += `👉 Error: ${err.reasons.join(", ")}\n\n`;
   });
 
-  message += "*Vui lòng viết rõ làm gì, bao nhiêu, ở đâu và trước mấy giờ (Ví dụ: \"Design 2 thumbnails for Instagram by 16:30\").*";
+  message += "*Please include what, how much, where, and by when (e.g. \"Design 2 thumbnails for Instagram by 16:30\").*";
   
   return message;
 }
