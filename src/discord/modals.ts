@@ -12,7 +12,14 @@ export function employeeAddModal() {
 
 export function checkinTasksModal() {
   return modal("checkin_submit", "Check-in Tasks", [
-    input("tasks", "Tasks for this shift (one per line)", TextInputStyle.Paragraph, "", false)
+    input(
+      "tasks",
+      "Tasks for this shift (one per line)",
+      TextInputStyle.Paragraph,
+      "",
+      false,
+      "Design 2 thumbnails for Instagram by 17:00\nWrite 1 TikTok script by 18:30"
+    )
   ]);
 }
 
@@ -61,10 +68,12 @@ function input(
   label: string,
   style: TextInputStyle = TextInputStyle.Short,
   value = "",
-  required = true
+  required = true,
+  placeholder = ""
 ) {
   const builder = new TextInputBuilder().setCustomId(customId).setLabel(label).setStyle(style).setRequired(required);
   if (value) builder.setValue(value);
+  if (placeholder) builder.setPlaceholder(placeholder);
   return builder;
 }
 
@@ -77,6 +86,13 @@ export function checkoutNoteModal() {
 export function retroCheckinModal() {
   return modal("retro_checkin_submit", "Điểm danh bù (Retro check-in)", [
     input("time", "Time (e.g. 08:30 or 2026-06-08 08:30)", TextInputStyle.Short, ""),
-    input("tasks", "Tasks for this shift (one per line)", TextInputStyle.Paragraph, "", false)
+    input(
+      "tasks",
+      "Tasks for this shift (one per line)",
+      TextInputStyle.Paragraph,
+      "",
+      false,
+      "Design 2 thumbnails for Instagram by 17:00\nWrite 1 TikTok script by 18:30"
+    )
   ]);
 }

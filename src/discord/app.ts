@@ -19,6 +19,7 @@ import { AppError } from "../services/errors";
 import type { ReminderDelivery } from "../jobs/reminder-queue";
 import type { CheckoutReminderKind } from "../services/reminders";
 import { nextMondayIso, parseDateTime, parseDateTimeInTz, getTodayStrInTz, parseSlotLines } from "../utils/parsers";
+import { validateTaskLines, formatValidationError } from "../utils/task-validator";
 import { registerDiscordCommands } from "./commands";
 import {
   checkoutReminderComponents,
@@ -361,6 +362,13 @@ async function handleModal(interaction: any, services: Services, config: AppConf
     const tasksRaw = field(interaction, "tasks");
     const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
 
+    if (tasks.length > 0) {
+      const validation = validateTaskLines(tasksRaw);
+      if (!validation.valid) {
+        throw new AppError(formatValidationError(validation.errors), "INVALID_INPUT");
+      }
+    }
+
     let checkinAt: Date;
     try {
       if (timeRaw.includes("-")) {
@@ -413,6 +421,13 @@ async function handleModal(interaction: any, services: Services, config: AppConf
   if (interaction.customId === "checkin_submit") {
     const tasksRaw = field(interaction, "tasks");
     const tasks = tasksRaw.split("\n").map((t: string) => t.trim()).filter(Boolean);
+
+    if (tasks.length > 0) {
+      const validation = validateTaskLines(tasksRaw);
+      if (!validation.valid) {
+        throw new AppError(formatValidationError(validation.errors), "INVALID_INPUT");
+      }
+    }
 
     const previousNotYetTasks = await services.attendance.getPreviousSessionNotYetTasks(actor);
     const carriedOverTasks = previousNotYetTasks.map(t => {
